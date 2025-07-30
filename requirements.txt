@@ -13,6 +13,7 @@ bleach @ file:///Users/builder/cbouss/buildout/croot/bleach_1732921502063/work
 Brotli @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_f7i0oxypt6/croot/brotli-split_1736182464088/work
 certifi @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_50bk79gkw_/croot/certifi_1745939223061/work/certifi
 cffi @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_e4xd9yd9i2/croot/cffi_1736182819442/work
+chardet==5.2.0
 charset-normalizer==3.4.2
 comm @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/comm_1728587617427/work
 crossrefapi==1.7.0
