@@ -3,7 +3,7 @@ requests
 pydantic
 tqdm
 
-crossref-api
+crossrefapi
 pyalex
 
 chardet
