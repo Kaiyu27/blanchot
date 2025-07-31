@@ -16,6 +16,8 @@ pd.set_option('future.no_silent_downcasting', True)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 class Author(BaseModel):
+    model_config = {'from_attributes': True}
+    
     full_name: str
     given_name: Optional[str] = None
     family_name: Optional[str] = None
@@ -25,12 +27,16 @@ class BlanchotWork(BaseModel):
     title: Optional[str] = None
     
     authors: List[Author] = []
+    editors: List[Author] = []
     
     year: Optional[int] = None
     publication_date: Optional[str] = None
     journal_name: Optional[str] = None
     publisher: Optional[str] = None
     work_type: Optional[str] = None
+
+    language: Optional[str] = None
+    is_open_access: Optional[bool] = None
     
     abstract: Optional[str] = None
     subjects: List[str] = []
@@ -55,6 +61,11 @@ def reconstruct_abstract(inverted_index: Optional[Dict[str, List[int]]]) -> Opti
     word_positions.sort()
     return ' '.join([word for pos, word in word_positions])
 
+def format_authors_for_csv(authors_list: List[Author]) -> str:
+    """Converts a list of Author objects into a single semicolon-delimited string."""
+    if not authors_list or not isinstance(authors_list, list):
+        return ""
+    return "; ".join([author.full_name for author in authors_list])
 
 def from_openalex_to_blanchotwork(work_data: dict) -> dict:
     """Translates a raw OpenAlex dictionary into our standard format."""
@@ -79,6 +90,8 @@ def from_openalex_to_blanchotwork(work_data: dict) -> dict:
         'journal_name': journal,
         'publisher': work_data.get('publisher'),
         'work_type': work_data.get('type'),
+        'language': work_data.get('language'),
+        'is_open_access': work_data.get('is_oa'),
         'abstract': reconstruct_abstract(work_data.get('abstract_inverted_index')),
         'subjects': subjects,
         'citation_count': work_data.get('cited_by_count'),
@@ -90,15 +103,28 @@ def from_openalex_to_blanchotwork(work_data: dict) -> dict:
 def from_crossref_to_blanchotwork(work_data: dict) -> dict:
     """Translates a raw Crossref dictionary into our standard format."""
     authors = []
-    author_list = work_data.get('author') or [] 
-    for author_info in author_list:
-        given = author_info.get('given', '')
-        family = author_info.get('family', '')
-        authors.append(Author(
-            full_name=f"{given} {family}".strip(),
-            given_name=given,
-            family_name=family
-        ))
+    author_data = work_data.get('author')
+    if isinstance(author_data, list):
+        for author_info in author_data:
+            given = author_info.get('given', '')
+            family = author_info.get('family', '')
+            authors.append(Author(
+                full_name=f"{given} {family}".strip(),
+                given_name=given,
+                family_name=family
+            ))
+            
+    editors = []
+    editor_data = work_data.get('editor')
+    if isinstance(editor_data, list):
+        for editor_info in editor_data:
+            given = editor_info.get('given', '')
+            family = editor_info.get('family', '')
+            editors.append(Author(
+                full_name=f"{given} {family}".strip(),
+                given_name=given,
+                family_name=family
+            ))
         
     year = None
     if published := (work_data.get('published-print') or work_data.get('published-online')):
@@ -119,11 +145,14 @@ def from_crossref_to_blanchotwork(work_data: dict) -> dict:
         'doi': doi,
         'title': (work_data.get('title') or [None])[0],
         'authors': authors,
+        'editors': editors,
         'year': year,
         'publication_date': None,
         'journal_name': journal_name,
         'publisher': work_data.get('publisher'),
         'work_type': work_data.get('type'),
+        'language': work_data.get('language'),
+        'is_open_access': work_data.get('is-open', {}).get('value', False) if work_data.get('is-open') else None,
         'subjects': work_data.get('subject', []),
         'citation_count': work_data.get('is-referenced-by-count'),
         'source_url': source_url,
@@ -144,6 +173,8 @@ def from_hal_to_blanchotwork(work_data: dict) -> dict:
         'journal_name': work_data.get('journalTitle_s'),
         'publisher': None,
         'work_type': work_data.get('docType_s'),
+        'language': (work_data.get('language_s') or [None])[0],
+        'is_open_access': work_data.get('openAccess_bool'),
         'abstract': None,
         'subjects': [],
         'citation_count': None,
@@ -151,6 +182,7 @@ def from_hal_to_blanchotwork(work_data: dict) -> dict:
         'source_db': 'HAL',
         'relation': None
     }
+
 
 def deduplicate_and_merge(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -186,10 +218,22 @@ def deduplicate_and_merge(df: pd.DataFrame) -> pd.DataFrame:
         
         merged_record['source_db'] = ', '.join(sorted(group['source_db'].unique()))
         merged_record['citation_count'] = group['citation_count'].max()
-        best_author_list = max(group['authors'], key=len, default=[])
+        merged_record['is_open_access'] = group['is_open_access'].any()
+        merged_record['language'] = group['language'].dropna().iloc[0] if not group['language'].dropna().empty else None
+        valid_author_lists = [authors for authors in group['authors'] if isinstance(authors, list)]
+        best_author_list = max(valid_author_lists, key=len, default=[])
         merged_record['authors'] = best_author_list
+        valid_editor_lists = [editors for editors in group['editors'] if isinstance(editors, list)]
+        best_editor_list = max(valid_editor_lists, key=len, default=[])
+        merged_record['editors'] = best_editor_list
 
         merged_records.append(merged_record)
+
+    for record in merged_records:
+        record['authors'] = format_authors_for_csv(record['authors'])
+        record['editors'] = format_authors_for_csv(record['editors'])
+        if isinstance(record['subjects'], list):
+            record['subjects'] = "; ".join(record['subjects'])
 
     df_merged = pd.DataFrame(merged_records)
     
@@ -201,13 +245,14 @@ def deduplicate_and_merge(df: pd.DataFrame) -> pd.DataFrame:
     print(f"Merge complete. Final unique record count: {len(df_final)}")
     return df_final
 
+
 def main():
     """
     Main function to fetch data from all sources, translate it,
     combine it, and save it to a CSV file.
     """
     print("--- Starting Data Synthesis ---")
-    
+
     print("Fetching data from OpenAlex...")
     oa_data = [from_openalex_to_blanchotwork(work) for work in get_oa_work()]
     

@@ -31,7 +31,7 @@ def get_cr_work():
     if failed_records:
         print(f"Total records that failed validation: {len(failed_records)}")
 
-    #DEDUPE
+
     original_count = len(validated_records)
     unique_records_builder = []
     seen_dois = set()
