@@ -267,7 +267,8 @@ def main():
     
     df_final = deduplicate_and_merge(df_initial)
 
-
+    
+    #GIT PAGES FOR DATA: https://kaiyu27.github.io/blanchot/blanchot/outputs/data.csv
     #--Begin Wordpress formatting--
     print("\nFormatting data for WordPress import...")
 
@@ -280,7 +281,7 @@ def main():
     )
     #--End Wordpress formatting--
     
-    
+
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'outputs', 'data.csv')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
