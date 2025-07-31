@@ -266,6 +266,20 @@ def main():
     df_initial = pd.DataFrame(oa_data + hal_data + cr_data)
     
     df_final = deduplicate_and_merge(df_initial)
+
+
+    #--Begin Wordpress formatting--
+    print("\nFormatting data for WordPress import...")
+
+    df_final['authors'] = df_final['authors'].apply(
+        lambda authors_list: ' | '.join([author['full_name'] for author in authors_list]) if isinstance(authors_list, list) else ''
+    )
+
+    df_final['subjects'] = df_final['subjects'].apply(
+        lambda subjects_list: ' | '.join(subjects_list) if isinstance(subjects_list, list) else ''
+    )
+    #--End Wordpress formatting--
+    
     
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'outputs', 'data.csv')
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
