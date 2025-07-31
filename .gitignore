@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS specific files
+.DS_Store
+
+# Environment files
+.env
+*.env
+
+# Generated data outputs
+outputs/
+*.csv
+*.json
