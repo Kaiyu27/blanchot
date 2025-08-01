@@ -273,7 +273,7 @@ def main():
     print("\nFormatting data for WordPress import...")
 
     df_final['authors'] = df_final['authors'].apply(
-        lambda authors_list: ' | '.join([author['full_name'] for author in authors_list]) if isinstance(authors_list, list) else ''
+        lambda authors_list: ' | '.join([author.full_name for author in authors_list]) if isinstance(authors_list, list) else ''
     )
 
     df_final['subjects'] = df_final['subjects'].apply(

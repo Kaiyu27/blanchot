@@ -30,7 +30,6 @@ class Authorship(BaseModel):
     author_position: Optional[Literal['first', 'middle', 'last']] = None
 
 
-    # # TODO: see if there are standardized ways to represent a country
     countries: list[str]
     institutions: list[Institution]
     is_corresponding: Optional[bool] = None

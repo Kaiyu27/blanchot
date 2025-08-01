@@ -47,13 +47,11 @@ def get_oa_work():
                         valid_work['short_id'] = re.search(r'[A-Z]\d+', str(valid_work['id'])).group()
                         records.append(valid_work)
                     except ValidationError as e:
-                        # FIX: This now correctly logs works that fail Pydantic validation
                         invalid_works.append({
                             "work_id": work.get("id"),
                             "error": str(e)
                         })
                     except AttributeError:
-                        # FIX: This now correctly logs works where the 'short_id' can't be parsed
                         invalid_works.append({
                             "work_id": work.get("id", "N/A"),
                             "error": "Could not parse short_id from work ID."
