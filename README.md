@@ -1,82 +1,67 @@
-# blanchot
-Blanchot Bibliographic Masterlist
-An open-source project to create a comprehensive, clean, and automatically updating bibliographic masterlist of scholarly works related to the philosopher and writer Maurice Blanchot.
+# Blanchot Digital Bibliography
+This project provides an automated pipeline for building a comprehensive, deduplicated, and merged bibliographic dataset on the works of and about Maurice Blanchot. It collects data from three major academic sources: OpenAlex, Crossref, and HAL. The final output is a clean CSV file, suitable for research and analysis.
 
-# Description
-This project synthesizes data from multiple major academic APIs (OpenAlex, Crossref, and HAL) to create a single, de-duplicated, and validated list of secondary literature. The data is processed using a Python script that includes intelligent chapter consolidation, relevance scoring, and historical enrichment via citation chasing to produce a high-quality dataset for researchers.
+## Features
+**Multi-Source Aggregation:** Fetches data from OpenAlex, Crossref, and HAL APIs.
 
-The final masterlist is automatically updated weekly using a GitHub Action to ensure it remains current with the latest publications.
+**Data Standardization:** Translates disparate data formats into a single, consistent schema.
 
-# Features
-Multi-Source Synthesis: Aggregates data from OpenAlex, Crossref, and HAL.
+**Intelligent Deduplication:** Identifies and merges duplicate records across all sources using DOIs as the primary key.
 
-Data Validation: Uses Pydantic to ensure the integrity and structure of the collected data.
+**Automated Updates:** A GitHub Actions workflow runs the synthesis script weekly to keep the dataset current.
 
-Intelligent Consolidation: Groups individual book chapters into single book entries using "parent DOI" relationships and title matching.
+**Clean Output:** Produces a single data.csv file with the final, cohesive bibliography.
 
-De-duplication: Uses DOIs and title/year matching to ensure the final list contains only unique works.
+## Data Sources
+The script pulls data from the following APIs:
 
-Automated Weekly Updates: A GitHub Action runs the synthesis script every week to find new publications and commits the updated list back to the repository.
+- OpenAlex
 
-Historical Enrichment: A "citation chasing" script uses recent works to find and add older, foundational literature that may be underrepresented in modern indexes.
+- Crossref
 
-# How to Use
-To run this project locally, follow these steps:
+- HAL (Hyper-Articles en Ligne)
 
-Clone the repository:
+## Project Structure
+```
+blanchot/
+├── .github/workflows/    # GitHub Actions automation.
+├── blanchot/             # Main package.
+│   ├── cr/                 # Scripts/models for CR.
+│   ├── hal/                # Scripts/models for HAL.
+│   ├── openalex/           # Scripts/models for OA.
+│   └── run_synth.py        # Main synthesis script.
+├── outputs/              # data.csv save location.
+├── .gitignore              
+└── requirements.txt        
+```
 
-git clone https://github.com/[your-username]/[your-repo-name].git
-cd [your-repo-name]
+## Setup and Installation
 
-Install dependencies:
-It is recommended to use a virtual environment.
+### Clone the repository:
+```bash
+git clone [https://github.com/Kaiyu27/blanchot.git](https://github.com/Kaiyu27/blanchot.git)
+cd blanchot
+```
+### Set up a Python environment (Conda):
+```Bash
+conda create -n blanchot python=3.13
+conda activate blanchot
+```
 
-python -m venv venv
-source venv/bin/activate
+### Install dependencies:
+```Bash
 pip install -r requirements.txt
+```
 
-Set up API Keys (if required):
+## Usage
+To run the full data synthesis pipeline, execute the main script from the project's root directory:
+```Bash
+python blanchot/run_synth.py
+```
+The script will fetch data from all sources, process it, and save the final merged file to outputs/data.csv.
 
-The scripts are configured to pull API keys from environment variables or GitHub Secrets. For local runs, you may need to set these up. For example, for the weekly update script:
+## Automation
+This repository is configured with a GitHub Actions workflow (.github/workflows/run_synthesis.yml) that automatically runs the synthesis script once a week. It commits the updated data.csv file back to the repository, ensuring the dataset remains current.
 
-export YOUR_EMAIL="your_email@example.com"
-
-Run the scripts:
-
-To generate the initial master list from local JSON files, run the main synthesis script:
-
-python [your_synthesis_script_name.py]
-
-To enrich the list with historical data, run the citation chasing script:
-
-python [your_citation_chasing_script_name.py]
-
-# Output Data
-The primary output of this project is the blanchot_master_list.json file. This file contains a list of unique, consolidated works. Each work is a JSON object with the following standardized structure:
-
-doi: The Digital Object Identifier (string, optional).
-
-title: The title of the work (string).
-
-authors: A list of author objects, each containing a full_name (string).
-
-year: The publication year (integer, optional).
-
-publication_date: The full publication date (string, optional).
-
-journal_name: The name of the journal or container publication (string, optional).
-
-publisher: The publisher of the work (string, optional).
-
-work_type: The type of work, e.g., "article", "book-chapter" (string, optional).
-
-subjects: A list of subject keywords (list of strings).
-
-source_url: A direct link to the record in its original database (string).
-
-source_db: The database the record was sourced from (e.g., 'OpenAlex', 'Crossref').
-
-citation_count: The number of known citations (integer, optional).
-
-# License
+## License
 This project is licensed under the MIT License. See the LICENSE file for details.
