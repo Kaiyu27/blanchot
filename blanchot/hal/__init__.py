@@ -8,7 +8,7 @@ from .models import HALWorkModel
 
 
 BASE_URL = "https://api.archives-ouvertes.fr/search/"
-SEARCH_TERM = "Blanchot"
+SEARCH_TERM = "Maurice Blanchot"
 START_YEAR = 1998
 ROWS_PER_PAGE = 100
 OUTPUT_JSON_FILE = "hal_blanchot_data.json"

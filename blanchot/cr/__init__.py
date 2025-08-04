@@ -2,13 +2,17 @@ from crossref.restful import Works
 import pandas as pd
 from pydantic import ValidationError
 from tqdm import tqdm
+import time
 
 from .models import CrossrefWorkModel
 
 works_api = Works()
 
-works_query = works_api.query(bibliographic='Blanchot').filter(
-    from_pub_date='1998'
+current_year = time.localtime().tm_year
+
+works_query = works_api.query(bibliographic="Blanchot").filter(
+    from_pub_date='1998',
+    until_pub_date=str(current_year)
 ).sort('published').order('asc')
 
 def get_cr_work():
