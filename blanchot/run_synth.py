@@ -423,6 +423,15 @@ def reconstruct_abstract(inverted_index: Optional[Dict[str, List[int]]]) -> Opti
     word_positions.sort()
     return ' '.join([word for pos, word in word_positions])
 
+def load_seed_titles(filepath="blanchot/seed_titles.txt") -> set:
+    """Loads a list of known-good titles from a text file."""
+    try:
+        with open(filepath, 'r') as f:
+            # Read titles, strip whitespace, and convert to lowercase for matching
+            return {line.strip().lower() for line in f}
+    except FileNotFoundError:
+        print(f"Warning: Seed titles file not found at '{filepath}'. Skipping this scoring rule.")
+        return set()
 
 # --- Translator Functions ---
 
@@ -612,6 +621,8 @@ def calculate_relevance_scores(df: pd.DataFrame) -> pd.DataFrame:
     """Calculates a relevance score for each work, including citation analysis."""
     print("\n--- Calculating Relevance Scores ---")
     
+    seed_titles = load_seed_titles() # Assumes you have the load_seed_titles function
+    
     positive_keywords = ['levinas', 'derrida', 'deconstruction', 'literary theory', 'the neuter']
     
     def get_score(row):
@@ -619,10 +630,16 @@ def calculate_relevance_scores(df: pd.DataFrame) -> pd.DataFrame:
         title = str(row.get('title') or '').lower()
         abstract = str(row.get('abstract') or '').lower()
         
+        # --- START: CORRECTED CODE ---
+        # Safely handle the subjects field by checking if it's a list
         subjects_list = row.get('subjects')
         subjects = ' '.join(subjects_list).lower() if isinstance(subjects_list, list) else ''
+        # --- END: CORRECTED CODE ---
         
         search_text = f"{title} {abstract} {subjects}"
+
+        if title in seed_titles:
+            score += 100
 
         if 'maurice blanchot' in title: score += 10
         elif 'blanchot' in title: score += 7
@@ -669,7 +686,7 @@ def main():
     df_scored = calculate_relevance_scores(df_merged)
     
     # Prune the dataset, keeping only works with a minimum relevance score
-    RELEVANCE_THRESHOLD = 5
+    RELEVANCE_THRESHOLD = 8
     print(f"\nPruning dataset. Keeping works with relevance score >= {RELEVANCE_THRESHOLD}...")
     original_count = len(df_scored)
     df_pruned = df_scored[df_scored['relevance_score'] >= RELEVANCE_THRESHOLD].copy()
